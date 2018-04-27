@@ -6,6 +6,9 @@ Cloud Computing Final Project - Weather Data
 I chose Pyspark with SQL to do my analysis. I felt comfortable with map reduce after the last assignment and wanted to 
 try something new and learn a new skill set for utilization after graduation.
 
+I also began to explore using the pyspark dataframe language. However, ran into some blockers there.
+
+I also started solving this initially with map reduce.
 
 ## Code Adaptation
 
@@ -473,5 +476,86 @@ def coldStations():
     sc.stop()
 ```
 
+## Hottest and coldest day and corresponding weather stations in the entire dataset
+
+Hottest Day Final Output
+
+```
++-----------+--------+---+
+|         ID|      DT|VAL|
++-----------+--------+---+
+|USR0000CSAW|20071013|556|
++-----------+--------+---+
+```
 
 
+Hottest Day Code:
+Rewrites the max value until it goes through all the files and is sure it has the max value.
+
+```
+def hottestEver():
+    tempMaxValue = 0
+    tempMaxDf = 0
+    for num in range(2000, 2019):
+        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
+        lines = sc.textFile(file)
+        parts = lines.map(lambda l: l.split(","))
+        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
+        weatherDataFrame = sqlContext.createDataFrame(lables)
+        weatherDataFrame.registerTempTable("weatherTable")
+        # select distinct incase a station shows up more than once, show the next coldest
+        query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL DESC LIMIT 1")
+        query.show()
+        temp = query.select('VAL').collect()[0][0]
+        if temp > tempMaxValue:
+            tempMaxDf = query
+            tempMaxDf.show()
+            tempMaxValue = temp
+    print("FINAL")
+    tempMaxDf.show()
+    sc.stop()
+
+```
+
+
+## Median Hot Value
+
+Code:
+
+```
+def runHotMed():
+    for num in range(2000, 2019):
+        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
+        lines = sc.textFile(file)
+        parts = lines.map(lambda l: l.split(","))
+        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
+        weatherDataFrame = sqlContext.createDataFrame(lables)
+        weatherDataFrame.registerTempTable("weatherTable")
+        # get single hottest date by ordering same as coldest but descending
+        query = sqlContext.sql("SELECT ID, percentile_approx(VAL, 0.5) from weatherTable WHERE EL in ('TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID")
+        query.show()
+        query.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("hdfs:/user/hornbd/hotOutMed/medHot" + str(num) + ".csv")
+    sc.stop()
+
+```
+
+
+## Median Cold Value
+
+Code:
+
+```
+def runColdMed():
+    for num in range(2000, 2019):
+        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
+        lines = sc.textFile(file)
+        parts = lines.map(lambda l: l.split(","))
+        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
+        weatherDataFrame = sqlContext.createDataFrame(lables)
+        weatherDataFrame.registerTempTable("weatherTable")
+        # get single hottest date by ordering same as coldest but descending
+        query = sqlContext.sql("SELECT percentile_approx(VAL, 0.5) from weatherTable WHERE EL in ('TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY VAL ORDER BY VAL")
+        query.show()
+        query.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("hdfs:/user/hornbd/hotOutMed/medHot" + str(num) + ".csv")
+    sc.stop()
+```
