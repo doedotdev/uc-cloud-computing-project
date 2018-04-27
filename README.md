@@ -74,6 +74,11 @@ All code snippets follow the same general structure.
 - Right out each year file to its respective location and name it based on the year.
 
 
+## TO RUN
+
+Run individual functions in sparkshell or kick off whole job with spark submit.
+
+
 ## Set Up
 
 Data is located here:
