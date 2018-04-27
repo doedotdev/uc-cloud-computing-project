@@ -137,6 +137,206 @@ This is what the dataset as a dataframe looks like
 only showing top 20 rows
 ```
 
+## Hottest day and corresponding weather stations in the entire dataset
+
+Hottest Day Final Output
+
+```
++-----------+--------+---+
+|         ID|      DT|VAL|
++-----------+--------+---+
+|USR0000CSAW|20071013|556|
++-----------+--------+---+
+```
+
+
+Hottest Day Code:
+Rewrites the max value until it goes through all the files and is sure it has the max value.
+
+```
+def hottestEver():
+    tempMaxValue = 0
+    tempMaxDf = 0
+    for num in range(2000, 2019):
+        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
+        lines = sc.textFile(file)
+        parts = lines.map(lambda l: l.split(","))
+        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
+        weatherDataFrame = sqlContext.createDataFrame(lables)
+        weatherDataFrame.registerTempTable("weatherTable")
+        # select distinct incase a station shows up more than once, show the next coldest
+        query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL DESC LIMIT 1")
+        query.show()
+        temp = query.select('VAL').collect()[0][0]
+        if temp > tempMaxValue:
+            tempMaxDf = query
+            tempMaxDf.show()
+            tempMaxValue = temp
+    print("FINAL")
+    tempMaxDf.show()
+    sc.stop()
+
+```
+
+## Coldest Day and corresponding weather stations in the entire dataset
+
+Final coldest output:
+```
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20080207|-578|
++-----------+--------+----+
+```
+
+
+```
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00505644|20000102|-578|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USW00026508|20010313|-528|
++-----------+--------+----+
+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USR0000AKAI|20020124|-472|
++-----------+--------+----+
+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501492|20030107|-500|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20040130|-533|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20050113|-550|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USR0000ASEL|20061220|-528|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20070224|-539|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20080207|-578|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20090108|-556|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20100111|-533|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00509869|20110124|-517|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00503165|20120130|-544|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00502339|20130128|-528|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00501684|20140211|-500|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00502339|20150127|-528|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USS0051R01S|20161130|-469|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USS0051R01S|20170119|-520|
++-----------+--------+----+
+
++-----------+--------+----+
+|         ID|      DT| VAL|
++-----------+--------+----+
+|USC00502339|20180201|-528|
++-----------+--------+----+
+```
+
+
+Code for coldest ever:
+
+```
+def coldestEver():
+    tempMinValue = 0
+    tempMinDf = 0
+    for num in range(2000, 2019):
+        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
+        lines = sc.textFile(file)
+        parts = lines.map(lambda l: l.split(","))
+        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
+        weatherDataFrame = sqlContext.createDataFrame(lables)
+        weatherDataFrame.registerTempTable("weatherTable")
+        # select distinct incase a station shows up more than once, show the next coldest
+        query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMIN') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL ASC LIMIT 1")
+        query.show()
+        temp = query.select('VAL').collect()[0][0]
+        if temp < tempMinValue:
+            tempMinDf = query
+            tempMinDf.show()
+            tempMinValue = temp
+    print("FINAL")
+    tempMinDf.show()
+    sc.stop()
+```
+
+
+
 ## Average TMIN, TMAX for each year excluding abnormalities or missing data
 
 Average TMAX and TMIN for each year table:
@@ -480,205 +680,6 @@ def coldStations():
         query.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("hdfs:/user/hornbd/coldStation/cold" + str(num) + ".csv")
     sc.stop()
 ```
-
-## Hottest day and corresponding weather stations in the entire dataset
-
-Hottest Day Final Output
-
-```
-+-----------+--------+---+
-|         ID|      DT|VAL|
-+-----------+--------+---+
-|USR0000CSAW|20071013|556|
-+-----------+--------+---+
-```
-
-
-Hottest Day Code:
-Rewrites the max value until it goes through all the files and is sure it has the max value.
-
-```
-def hottestEver():
-    tempMaxValue = 0
-    tempMaxDf = 0
-    for num in range(2000, 2019):
-        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
-        lines = sc.textFile(file)
-        parts = lines.map(lambda l: l.split(","))
-        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
-        weatherDataFrame = sqlContext.createDataFrame(lables)
-        weatherDataFrame.registerTempTable("weatherTable")
-        # select distinct incase a station shows up more than once, show the next coldest
-        query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL DESC LIMIT 1")
-        query.show()
-        temp = query.select('VAL').collect()[0][0]
-        if temp > tempMaxValue:
-            tempMaxDf = query
-            tempMaxDf.show()
-            tempMaxValue = temp
-    print("FINAL")
-    tempMaxDf.show()
-    sc.stop()
-
-```
-
-## Coldest Day and corresponding weather stations in the entire dataset
-
-Final coldest output:
-```
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20080207|-578|
-+-----------+--------+----+
-```
-
-
-```
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00505644|20000102|-578|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USW00026508|20010313|-528|
-+-----------+--------+----+
-
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USR0000AKAI|20020124|-472|
-+-----------+--------+----+
-
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501492|20030107|-500|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20040130|-533|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20050113|-550|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USR0000ASEL|20061220|-528|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20070224|-539|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20080207|-578|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20090108|-556|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20100111|-533|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00509869|20110124|-517|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00503165|20120130|-544|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00502339|20130128|-528|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00501684|20140211|-500|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00502339|20150127|-528|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USS0051R01S|20161130|-469|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USS0051R01S|20170119|-520|
-+-----------+--------+----+
-
-+-----------+--------+----+
-|         ID|      DT| VAL|
-+-----------+--------+----+
-|USC00502339|20180201|-528|
-+-----------+--------+----+
-```
-
-
-Code for coldest ever:
-
-```
-def coldestEver():
-    tempMinValue = 0
-    tempMinDf = 0
-    for num in range(2000, 2019):
-        file = "hdfs:/user/tatavag/PIIweather/" + str(num) + ".csv"
-        lines = sc.textFile(file)
-        parts = lines.map(lambda l: l.split(","))
-        lables = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
-        weatherDataFrame = sqlContext.createDataFrame(lables)
-        weatherDataFrame.registerTempTable("weatherTable")
-        # select distinct incase a station shows up more than once, show the next coldest
-        query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMIN') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL ASC LIMIT 1")
-        query.show()
-        temp = query.select('VAL').collect()[0][0]
-        if temp < tempMinValue:
-            tempMinDf = query
-            tempMinDf.show()
-            tempMinValue = temp
-    print("FINAL")
-    tempMinDf.show()
-    sc.stop()
-```
-
 
 
 ## Median Hot Value
