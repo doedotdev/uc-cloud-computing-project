@@ -19,9 +19,7 @@ from operator import add
 from pyspark.sql import SQLContext, Row
 from pyspark import SparkContext
 if __name__ == "__main__":
- """
- Usage: weather sourcefile
- """
+
  sc = SparkContext(appName="PythonPi")
  sqlContext = SQLContext(sc)
  file = sys.argv[1]
@@ -71,18 +69,6 @@ All code snippets follow the same general structure.
         - 'W'
     - Do not include SF values that blank
 - Right out each year file to its respective location and name it based on the year.
-    
-
- - for num in range(2000,2019):
-        file = "hdfs:/user/tatavag/PIIweather/"+str(num)+".csv"
-        lines = sc.textFile(file)
-        parts = lines.map(lambda l: l.split(","))
-        obs = parts.map(lambda p: Row(ID=p[0], DT=p[1], EL=p[2], VAL=int(p[3]), MF=p[4], QF=p[5], SF=p[6]))
-        weatherDataFrame = sqlContext.createDataFrame(obs)
-        weatherDataFrame.registerTempTable("weatherTable")
-        query = sqlContext.sql("SELECT EL, avg(VAL) VAL from weatherTable WHERE EL in ('TMIN','TMAX') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY EL")
-        query.show()
-        query.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("hdfs:/user/hornbd/averageOut/avg" + str(num) + ".csv")
 
 
 ## Set Up
