@@ -120,7 +120,7 @@ def coldestEver():
         query = sqlContext.sql("SELECT ID, DT, VAL from weatherTable WHERE EL in ('TMIN') AND VAL <> 9999 AND VAL <> -9999 AND SF <> '' AND QF IN ('','Z','W') GROUP BY ID, DT, VAL ORDER BY VAL ASC LIMIT 1")
         query.show()
         temp = query.select('VAL').collect()[0][0]
-        if temp > tempMinValue:
+        if temp < tempMinValue:
             tempMinDf = query
             tempMinDf.show()
             tempMinValue = temp
