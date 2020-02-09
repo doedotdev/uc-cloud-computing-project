@@ -1,5 +1,5 @@
-# whether
-Cloud Computing Final Project - Weather Data
+# uc-cloud-computing-project
+University of Cincinnati - Cloud Computing Final Project - Weather Data
 
 ## Method
 
